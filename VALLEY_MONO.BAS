@@ -29,7 +29,7 @@
 39 REM Main program starts here
 40 PRINT RND(-TIME)
 50 MODE 9 : REM 320 x 240 X 16
-51 COLOUR 15   : REM White
+51 COLOUR 10
 90 REM *** Define major vars
 91 REM D() is used when drawing vertical walls in the lair/castle
 92 REM G() is used for path and safe castle posns and charvals (even = pos, odd = char)
@@ -149,8 +149,7 @@
 1070 IF NAME$ <> "" THEN PRINT "Character state loaded" : GOTO 1400 : REM Start game with loaded stats
 1198 :
 1199 REM ** Input character name
-1200 CLS : COLOUR 15 : REM White
-1205 PROC_enableCursor : INPUT "ENTER YOUR NAME: ";NAME$
+1200 CLS : PROC_enableCursor : INPUT "ENTER YOUR NAME: ";NAME$
 1210 IF NAME$="" THEN GOTO 1200
 1230 PRINT
 1240 PRINT "CHOOSE A CHARACTER TYPE WISELY:" : PRINT
@@ -202,9 +201,8 @@
 1770    PROC_statusClear : REM was PRINT TAB(0,21) SPC(36) : REM Wipe message line
 1780 ENDPROC
 1999 REM *** Player movement
-2000 M=W : PK=FN_vpeek(W) : COLOUR 11 : PROC_vpoke(M, PLAYERCHAR%)  : REM draw player at new pos, remembering what was there
+2000 M=W : PK=FN_vpeek(W) : PROC_vpoke(M, PLAYERCHAR%)  : REM draw player at new pos, remembering what was there
 2010 STAMINA = STAMINA + 10
-2015 COLOUR 15 : REM White
 2020 IF PK=PATH1CHAR% OR PK=PATH2CHAR% THEN 2040 : REM Path char
 2030 PRINT TAB(0,22) "WHICH DIRECTION ?"; : GOTO 2050
 2040 PRINT TAB(0,22) "SAFE ON THE PATH...WHICH WAY ?";
@@ -337,7 +335,7 @@
 3880 PROC_delayUpdate(80, "")
 3890 GOTO 2010 : REM Player movement
 3900 PROC_statusPrint("KNAVISH COWARD !") : FIGHTING=0
-3905 EX = EX - (U MOD  20) : IF EX < 0 THEN EX = 0 : REM JH - Added experience penalty for running away :)
+3905 EX = EX - U : IF EX < 0 THEN EX = 0 : REM JH - Added experience penalty for running away :)
 3910 GOTO 3880
 3999 REM *** Monster's combat routine
 4000 PROC_statusPrint("THE CREATURE ATTACKS...")
@@ -380,15 +378,14 @@
 4400 PROC_statusPrint("YOUR PSI SHIELD PROTECTS YOU") : GOTO 4280
 4410 PROC_statusPrint("...MISSED YOU !") : GOTO 4280
 4499 REM *** Spell control routine
-4500 PROC_statusPrint("WHICH SPELL SEEK YE? (PRESS 1, 2 OR 3)")
-4505 PROC_timedInput : REM Combat get (was GOSUB 1700)
+4500 PROC_statusPrint("WHICH SPELL SEEK YE? (PRESS 1, 2 OR 3)") : PROC_timedInput : REM Combat get (was GOSUB 1700)
 4510 IF TV%=1 THEN 3600 : REM Too slow
 4520 IF VAL(GC$)>0 AND VAL(GC$)<=3 THEN 4540
 4530 PROC_statusPrint("NO SUCH SPELL...     ") : GOTO 4640
 4540 IF 4*RND(PS)<=MM THEN 4590
 4550 PRINT TAB(0,22) "" : ON VAL(GC$) GOSUB 5000,5200,5400
 4560 PRINT TAB(0,22) "" : ON SC GOTO 4620,4640,4660,4570,4600,4580,4590
-4570 PRINT"IT IS BEYOND YOU!    ":GOTO 4640
+4570 PRINT"IT IS BEYOND YOU     ":GOTO 4640
 4580 PRINT:PRINT"BUT THE SPELL FAILS...!":GOTO 4640
 4590 PRINT"NO USE, THE BEASTS PSI SHIELDS IT":GOTO 4640
 4600 PRINT"THE SPELL SAPS ALL YOUR STRENGTH": GOTO 23000 : REM Death
@@ -407,12 +404,12 @@
 5200 IF MS>STAMINA OR PS<49 OR EX<1000 THEN SC=4 : RETURN
 5210 STAMINA=STAMINA-10 : IF STAMINA<=0 THEN SC=5 : RETURN
 5220 IF MM=0 THEN PRINT "THIS BEAST HAS NO PSI TO ATTACK":SC=2:RETURN
-5230 PRINT "WITH MY MIND I BATTLE THEE!"
+5230 PRINT "WITH MY MIND I BATTLE THEE"
 5240 PROC_delayUpdate(120, "")
 5250 RF=RND(100) : IF RF<40 AND MM>10 THEN SC=6 : RETURN
 5260 D=INT((((CS*50*RF/100)-5*(MS+MM)+E)/50)/4)
 5270 IF D<=0 THEN D=0 : SC=7 : RETURN
-5280 PRINT TAB(0,22) "THE PSI-LANCE CAUSES ";D*2;" DAMAGE  "
+5280 PRINT TAB(0,22) "THE PSI-LANCE CAUSES";D*2;"DAMAGE"
 5290 MM=MM-3*D : IF MM<=0 THEN MM=0
 5300 MS=MS-D : IF MS<=0 THEN MS=0
 5310 IF (MS+MM)>0 THEN SC=2 : RETURN
@@ -422,12 +419,12 @@
 5410 STAMINA=STAMINA-20 : IF STAMINA<=0 THEN SC=5 : RETURN
 5420 PRINT "WITH THE POWER OF MY SPELL I CURSE THEE-BURN YE SPAWN OF HELL AND SUFFER..." : PROC_delayUpdate(240, "")
 5460 PROC_statusPrint("A BOLT OF ENERGY LASHES AT THE BEAST...") : PROC_delayUpdate(80, "W")
-5480 IF RND(10) > (PS/78)*(5-P1) THEN PROC_statusPrint("CURSES! MISSED IT!") : SC=2 : RETURN
+5480 IF RND(10) > (PS/78)*(5-P1) THEN PROC_statusPrint("SHIT, MISSED IT !") : SC=2 : RETURN
 5490 D=INT((CS+RND(PS))-(MM*RND(10)))
 5500 IF D<=0 THEN D=0:SC=7 : RETURN
 5510 IF MS=0 THEN MM=MM-D : GOTO5530
 5520 MS=MS-D : IF D<10 THEN MM=INT(MM-(D/3))
-5530 PRINT TAB(0,22) "IT STRIKES HOME, CAUSING ";D;" DAMAGE  "
+5530 PRINT TAB(0,22) "IT STRIKES HOME, CAUSING";D;"DAMAGE  "
 5540 IF (MS+MM)<=0 THEN 5570
 5550 PROC_delayUpdate(80, "D") : SC=2 : RETURN
 5570 PRINT "THE BEAST DIES SCREAMING !" : EX=EX+U : FIGHTING=0 : SC=1 : RETURN
@@ -460,7 +457,6 @@
 9999 REM *** Draw Scene 1 (The Valley)
 10000 CLS : PROC_disableCursor : PROC_clearMap
 10005 F$="VAEGH" : FL=1 : S=1
-10006 COLOUR 7    : REM grey for mountain "frame"
 10010 FOR I% = 0 TO MAPWIDTH% - 1 : PROC_vpoke(I%, BORDERCHAR%) : NEXT I% : REM Top border
 10020 FOR I% = 1 TO MAPHEIGHT% - 2
 10025    PROC_vpoke(I% * MAPWIDTH%, BORDERCHAR%)
@@ -471,7 +467,7 @@
 10069 REM First draw - Place safe castle
 10070 M = MAPWIDTH% + 1 + INT(RND(11)) * MAPWIDTH%
 10080 L=M  :MP=M : W=M : G(0)=M : G(1)=SAFECHAR%
-10088 REM First draw - Generate path
+10089 REM First draw - Generate path
 10090 FOR I% = 2 TO 72 STEP 2
 10100     IF RND(100) > 50 THEN 10120
 10110     PC=PATH1CHAR% : L1=L+MAPWIDTH%+1 : GOTO 10130     : REM was 77
@@ -493,11 +489,9 @@
 10250     S(I%) = MAPWIDTH% + 1 + (Y% * MAPWIDTH%) + X%
 10260     IF FN_vpeek(S(I%)) <> 32 OR FN_vpeek(S(I%)+1) <> 32 THEN 10240
 10270 NEXT I%
-10278 REM Draw woods, swamps and tower markers
-10279 COLOUR 10  : REM Bright green
+10279 REM Draw woods, swamps and tower markers
 10280 PROC_vpoke(S(0), WOODSCHAR%) : PROC_vpoke(S(0)+1, WOODSCHAR%) : PROC_vpoke(S(1), WOODSCHAR%) : PROC_vpoke(S(1)+1, WOODSCHAR%) : REM Woods (was 216)
 10290 PROC_vpoke(S(2), SWAMPCHAR%) : PROC_vpoke(S(2)+1, SWAMPCHAR%) : PROC_vpoke(S(3), SWAMPCHAR%) : PROC_vpoke(S(3)+1, SWAMPCHAR%) : REM Swamps (was 173)
-10295 COLOUR 15  : REM White
 10300 PROC_vpoke(S(4), towerchar%) : REM Black Tower (was 87)
 10310 M=MP:W=M
 10330 RETURN
@@ -506,10 +500,8 @@
 12000 F$="AFL" : PC=TUFTCHAR% : GOTO 12020
 12010 F$="FAEHL" : PC=TREECHAR% : PK=32
 12020 CLS : PROC_disableCursor : PROC_clearMap
-12025 COLOUR 10   : REM Brigth green
 12030 FOR I% = 1 TO 200 : PROC_vpoke(RND(MAPSIZE% - 1), PC) : NEXT I%  : REM Plot trees or tufts
-12077 REM Plot lake
-12078 COLOUR 4    : REM Dark blue
+12078 REM Plot lake
 12079 A% = WATERCHAR%
 12080 PROC_vpokeXY(R2+2, D2, A%) : PROC_vpokeXY(R2+3, D2, A%)
 12081 PROC_vpokeXY(R2+1, D2+1, A%) : PROC_vpokeXY(R2+2, D2+1, A%) : PROC_vpokeXY(R2+3, D2+1, A%) : PROC_vpokeXY(R2+4, D2+1, A%) : PROC_vpokeXY(R2+5, D2+1, A%)
@@ -518,8 +510,7 @@
 12084 PROC_vpokeXY(R2+1, D2+4, A%) : PROC_vpokeXY(R2+2, D2+4, A%) : PROC_vpokeXY(R2+3, D2+4, A%) : PROC_vpokeXY(R2+4, D2+4, A%) : PROC_vpokeXY(R2+5, D2+4, 32) : PROC_vpokeXY(R2+6, D2+4, A%) : PROC_vpokeXY(R2+7, D2+4, A%)
 12085 PROC_vpokeXY(R2+3, D2+5, A%) : PROC_vpokeXY(R2+4, D2+5, A%) 
 12086 PROC_vpokeXY(R2+4, D2+6, A%)
-12148 REM Plot frame
-12149 COLOUR 10     : REM BRight green
+12149 REM Plot frame
 12150 FOR I% = 0 TO MAPWIDTH% - 1
 12155     PROC_vpoke(I%, WOODSBORDERCHAR%)     : REM frame top
 12160     PROC_vpoke(MAPSIZE% - MAPWIDTH% + I%, WOODSBORDERCHAR%)   : REM frame bottom
@@ -528,7 +519,6 @@
 12175    PROC_vpoke(I% * MAPWIDTH%, WOODSBORDERCHAR%)   : REM frame left
 12180    PROC_vpoke(I% * MAPWIDTH% + (MAPWIDTH% - 1), WOODSBORDERCHAR%) : REM frame right
 12185 NEXT I%
-12190 COLOUR 15  : REM White
 12200 W = MAPSIZE% - MAPWIDTH% - (MAPWIDTH% / 2) : PROC_vpoke(W, 32)         : REM Make sure player appears on a space char
 12210 IF Q1%=DOORCHAR% THEN M=MW : W=M  : REM Did player exit from lair to woods/swamp?
 12220 RETURN
@@ -537,7 +527,6 @@
 14000 F$="CAGE" : P=0 : H=N(FL) : PK=32 : GOTO14020
 14010 F$="CBE" : P=0 : H=N(FL) : PK=32 : P(FL)=P(2)
 14020 CLS : PROC_disableCursor : PROC_clearMap
-14022 COLOUR 7 :   REM Grey
 14025 FOR I% = 2 TO 22 : PROC_vpokeXY(I%, 0, WALLCHAR%) : PROC_vpokeXY(I%, 14, WALLCHAR%) : NEXT I%
 14030 FOR I% = 1 TO 13 : PROC_vpokeXY(2, I%, WALLCHAR%) : PROC_vpokeXY(22, I%, WALLCHAR%) : NEXT I%
 14069 REM ** Draw vertical walls
@@ -571,16 +560,14 @@
 14330     NEXT K%
 14335     IF K% = 100 OR K% = 101 THEN J% = 100  : REM exit loop
 14340 NEXT J%
-14348 REM Draw stairs
-14349 COLOUR 15  : REM White
+14349 REM Draw stairs
 14350 IF S=5 OR S=6 THEN 14380
 14360 IF FL/2=INT(FL/2) THEN PROC_vpoke(MAPSIZE% - MAPWIDTH% * 2 + 3, STAIRCHAR%) : GOTO14380
 14370 PROC_vpoke(61, STAIRCHAR%)
 14379 REM Need doorway?
 14380 IF FL=2 OR S=5 OR S=6 THEN PROC_vpoke(MAPSIZE% - MAPWIDTH% + 8, DOORCHAR%) : PROC_vpoke(MAPSIZE% - MAPWIDTH% * 2 + 8, 32)
 14390 IF P(3)=0 THEN W=MAPSIZE% - MAPWIDTH% * 2 + 8   : REM place player above the doorway    
-14398 REM Write appropriate name
-14399 COLOUR 11 : REM Yellow
+14399 REM Write appropriate name
 14400 IF S=5 THEN 14470
 14410 IF S=6 THEN 14450
 14420 PRINT TAB(24,4) "THE BLACK TOWER" : PRINT TAB(27,5) "OF ZAEXON" : PRINT TAB(24,8) "FLOOR ";FL-1 : GOTO14490
@@ -589,15 +576,13 @@
 14490 P(FL+1)=P(FL)+P
 14499 REM Scatter special finds
 14500 IF FL<4 OR RND(100) < 30 THEN 14570    : REM return
-14505 COLOUR 11 :  REM Yellow 
 14510 FOR I% = 1 TO INT(RND(5))+2
 14520     N1=INT(RND(19)) : N2=INT(RND(12)) : IF FN_vpeek(43+MAPWIDTH%*N2+N1) <> 32 THEN 14520
 14550     PROC_vpoke(43 + MAPWIDTH%*N2 + N1, TREASURECHAR%)
 14560 NEXT I%
 14570 RETURN
 14999 REM *** Stairs routine
-15000 COLOUR 15   : REM white
-15005 PROC_vpoke(W, PLAYERCHAR%) : PROC_vpoke(M, 32)  : REM was 231
+15000 PROC_vpoke(W, PLAYERCHAR%) : PROC_vpoke(M, 32)  : REM was 231
 15010 PROC_statusPrint("A STAIRWAY...UP OR DOWN ?") : TV%=FL
 15020 GC$ = FN_getFilteredKey("UDud") : IF GC$="U" OR GC$="u" THEN FL=FL+1 : GOTO 15050
 15040 FL=FL-1
@@ -623,21 +608,15 @@
 16080     IF PS<7 THEN PS=7
 16090     IF PS>INT(42*(P1+1)^LOG(P1^3.7))+75 THEN PS=INT(42*(P1+1)^LOG(P1^3.7))+75
 16100     IF STAMINA>125-(INT(P1)*12.5) THEN STAMINA=125-INT(INT(P1)*12.5)
-16105 COLOUR 15   : REM Bright white
 16110     PRINT TAB(0,15) NAME$;" (";CLASS$;")"
-16115 COLOUR 11   : REM Bright yellow
 16120     PRINT "TREASURE    ";TS,"COMBAT STR  ";CS;" "
 16130     PRINT "EXPERIENCE  ";EX,"PSI POWER   ";PS;" "
 16140     PRINT "TURNS       ";TURNS,"STAMINA     ";STAMINA;" "
-16150     PRINT "SPELLS      [S]";
-16152     IF EX >= 1000 AND PS >= 49 THEN PRINT "[P]";
-16154     IF EX >= 5000 AND PS >= 77 THEN PRINT "[C]";
 16179     REM If fighting, then update monster
 16180     IF FIGHTING=1 THEN GOTO 16210
 16190     PRINT TAB(0, 20) SPC(MAPWIDTH%) 
 16200     ENDPROC
 16210     REM PRINT USING"STRENGTH ## ##";MS,MM
-16215 COLOUR 15   : REM brigth white
 16220     PRINT TAB(0, 20) M$;" - STRENGTH = ";MS;" ";
 16225     IF MM > 0 THEN PRINT ", MAGIC = ";MM;"   "
 16230 ENDPROC
@@ -672,7 +651,6 @@
 17198 :
 17199 REM REplacement for TAB(0,21) PRINT "zzz..."
 17200 DEF PROC_statusPrint(msg$)
-17205    COLOUR 15  : REM White
 17210    PRINT TAB(0,22) msg$;  : REM semicolon necessary for when inputting key (cursor)
 17220 ENDPROC
 17299 :
@@ -726,7 +704,6 @@
 21020     RATING=INT(.067*(EX+TS/3)^.5+LOG(EX/((TURNS+1)^1.5)))
 21030     IF RATING>28 THEN RATING=28
 21040     IF RATING<0 THEN RATING=0
-21045     COLOUR 10
 21050     PRINT TAB(0,22) "YOUR RATING NOW BE ";RATING;"/28"
 21060     IF T(2)=1 THEN PRINT "YOU HAVE THE HELM OF EVANNA!"
 21070     IF T(0)=1 THEN PRINT "YOU HAVE THE AMULET WITH ";T(1);"/6 STONES."
@@ -737,7 +714,7 @@
 21997 :
 21998 REM These functions were 50000 and 55000 
 21999 REM ******* Save character routine goes here ***  (was 50000)
-22000 CLS : COLOUR 15 : REM White
+22000 CLS
 22010 PRINT "DO YOU WISH TO SAVE, ";NAME$;"? (Y/N) ";
 22020 GC$ = FN_getFilteredKey("YyNn") : REM ** uniget
 22030 IF GC$ = "N" OR GC$ = "n" THEN 22100

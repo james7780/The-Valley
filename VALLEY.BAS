@@ -72,7 +72,7 @@
 508 PRINT TAB(9, 11) "Which ?";
 520 GC$ = FN_getFilteredKey("NnLlIi") : REM ** Uniget routine
 530 IF GC$ = "N" OR GC$ = "n" THEN 1200
-540IF GC$ = "L" OR GC$ = "l" THEN 1000
+540 IF GC$ = "L" OR GC$ = "l" THEN 1000
 599 REM ...else show instructions
 600 CLS : PRINT "INSTRUCTIONS:"
 603 PRINT
@@ -95,7 +95,7 @@
 670 PRINT "anyone with at least the power and "
 675 PRINT "experience of a Warlord...'"
 680 PRINT : PRINT
-685 GOSUB 1600    : REM Press any key routine
+685 PROC_pressAnyKey    : REM Press any key routine
 699 REM Movement (keys) instructions
 700 CLS : PRINT "MOVEMENT KEYS:"
 705 PRINT
@@ -114,7 +114,7 @@
 723 PRINT "       L to hit monster's legs"
 724 PRINT "       S to cast a spell"
 725 PRINT : PRINT
-730 GOSUB 1600    : REM Press any key routine
+730 PROC_pressAnyKey    : REM Press any key routine
 749 REM Spells instructions
 750 CLS : PRINT "SPELLS:"
 751 PRINT
@@ -136,7 +136,7 @@
 774 PRINT "           power"
 775 PRINT "         - Uses 20 stamina"
 776 PRINT : PRINT
-780 GOSUB 1600    : REM Press any key routine
+780 PROC_pressAnyKey    : REM Press any key routine
 790 GOTO 500
 998 :
 999 REM ** Load character save
@@ -180,17 +180,18 @@
 1500 DEF FN_getFilteredKey(keyMask$)
 1501    PROC_enableCursor
 1502    GC$ = INKEY$(10) : IF GC$ = "" THEN GOTO 1502
-1505    A = 0    : REM Found flag (neccessary as cannot return from inside loop)
+1505    A = FALSE    : REM Found flag (neccessary as cannot return from inside loop)
 1510    FOR I% = 1 TO LEN(keyMask$)
-1520        IF MID$(keyMask$,I%,1)=GC$ THEN A = 1
+1520        IF MID$(keyMask$,I%,1)=GC$ THEN A = TRUE
 1530    NEXT I%
-1540    IF A = 0 THEN GOTO 1502	: REM Not a valid input - try again
+1540    IF A = FALSE THEN GOTO 1502	: REM Not a valid input - try again
 1545    PROC_disableCursor
 1550 = GC$
 1599 REM *** ANYKEY ROUTINE (used when loading and saving state)
-1600 PRINT "** PRESS ANY KEY TO CONTINUE **"
-1610 GC$=INKEY$(10) : IF GC$ = "" THEN GOTO 1610
-1620 RETURN
+1600 DEF PROC_pressAnyKey
+1605    PRINT "** PRESS ANY KEY TO CONTINUE **"
+1610    GC$=INKEY$(10) : IF GC$ = "" THEN GOTO 1610
+1620 ENDPROC
 1699 REM *** Timed player input (COMBAT GET ROUTINE)
 1700 DEF PROC_timedInput
 1705    GC$=INKEY$(1)  : REM clear keyboard buffer
@@ -201,10 +202,22 @@
 1760    IF TIME-T > 500 THEN TV%=1 : REM key not pressed on time (was dt > 200 in original?)
 1770    PROC_statusClear : REM was PRINT TAB(0,21) SPC(36) : REM Wipe message line
 1780 ENDPROC
+1799 REM *** Get restore colour for various objects when player moves off them
+1800 DEF FN_getItemColour(itemChar%)
+1805    LOCAL IC%
+1810    IC% = 15   : REM default to WHITE
+1815    IF itemChar% = PATH1CHAR% OR itemChar% = PATH2CHAR% THEN IC% = 7
+1830    IF itemChar% = LAIRCHAR% THEN IC% = 15
+1835    IF itemChar% = towerchar% THEN IC% = 15
+1840    IF itemChar% = SAFECHAR% THEN IC% = 11
+1842    IF itemChar% = WOODSCHAR% OR itemChar% = TREECHAR% OR itemChar% = TUFTCHAR% THEN IC% = 10
+1845    IF itemChar% = SWAMPCHAR% THEN IC% = 5
+1850    IF itemChar% = WATERCHAR% THEN IC% = 4
+1855   REM          WHEN STAIRCHAR% : IC% = 7
+1890 =IC%
 1999 REM *** Player movement
 2000 M=W : PK=FN_vpeek(W) : COLOUR 11 : PROC_vpoke(M, PLAYERCHAR%)  : REM draw player at new pos, remembering what was there
 2010 STAMINA = STAMINA + 10
-2015 COLOUR 15 : REM White
 2020 IF PK=PATH1CHAR% OR PK=PATH2CHAR% THEN 2040 : REM Path char
 2030 PRINT TAB(0,22) "WHICH DIRECTION ?"; : GOTO 2050
 2040 PRINT TAB(0,22) "SAFE ON THE PATH...WHICH WAY ?";
@@ -228,7 +241,8 @@
 2160 IF Q1%=STAIRCHAR% THEN GOTO 15000 : REM Stairs
 2170 IF Q1%=WATERCHAR% OR (GC$="5" AND PK=WATERCHAR%) THEN Q=134 : STAMINA=STAMINA-20 : IF STAMINA<=0 THEN 23000 : REM Player in water
 2180 IF Q1%=TREASURECHAR% THEN GOTO 2800 : REM Special find / treasure
-2190 PROC_vpoke(M, PK) : PK=FN_vpeek(W) : M=W : PROC_vpoke(M, Q)
+2190 COLOUR FN_getItemColour(PK) : PROC_vpoke(M, PK)   : REM Restore char we were standing on
+2195 PK=FN_vpeek(W) : M=W : COLOUR 11 : PROC_vpoke(M, Q)  : REM Save char at pos we are now moving to
 2200 IF PK=PATH1CHAR% OR PK=PATH2CHAR% THEN PROC_delayUpdate(5, "") : GOTO 2260 : REM path char
 2209 REM * Nothing, monster or special find?
 2210 RF = RND(100) : REM was RND(TIME), then compared 0.2 and 0.7
@@ -300,7 +314,7 @@
 3550 IF GC$<>"A" AND GC$<>"a" THEN 4000
 3560 PROC_delayUpdate(30, "D")
 3570 PROC_statusPrint("*** STRIKE QUICKLY *** ")
-3572 REM JH - Show combat instructions at bottom of screen (TODO - Also show spell avail etc)
+3572 REM JH - Show combat instructions at bottom of screen
 3573 REM PRINT TAB(0,25) "Press H to strike head, B for body, L for legs."
 3574 REM PRINT TAB(0,26) "Press S to cast a spell.                       "
 3575 REM PRINT TAB(32,27) "  ";
@@ -443,7 +457,7 @@
 9070 P(2)=INT(RND(30)) : TF=TURNS : GOTO 9130
 9090 IF TURNS>TF+INT(RND(6)) THEN 9130
 9100 PROC_statusPrint("THE WAY IS BARRED")
-9110 TURNS=TURNS-1 : STAMINA=STAMINA-10 : PROC_delayUpdate(100, "W") : GOTO2010
+9110 TURNS=TURNS-1 : STAMINA=STAMINA-10 : PROC_delayUpdate(100, "W") : GOTO 2010
 9130 STAMINA=STAMINA-10 : PROC_vpoke(M, 32) : PROC_vpoke(W, Q)
 9140 IF Q1%=WOODSBORDERCHAR% THEN S=1 : FL=1                   : REM 96 in original (woods/swamp border)
 9150 IF Q1%=DOORCHAR% AND S=4 THEN S=1:FL=1            : REM 104 in original (doorway in scene 4, 5, 6)
@@ -474,9 +488,9 @@
 10088 REM First draw - Generate path
 10090 FOR I% = 2 TO 72 STEP 2
 10100     IF RND(100) > 50 THEN 10120
-10110     PC=PATH1CHAR% : L1=L+MAPWIDTH%+1 : GOTO 10130     : REM was 77
-10120     PC=PATH2CHAR% : L1=L-MAPWIDTH%+1                  : REM was 78
-10130     IF L1 >= 511 OR L1 < MAPWIDTH% THEN 10100   : REM TODO - Check with new map height
+10110     PC = PATH1CHAR% : L1 = L + MAPWIDTH%+1 : GOTO 10130     : REM was 77
+10120     PC = PATH2CHAR% : L1 = L - MAPWIDTH%+1                  : REM was 78
+10130     IF L1 >= MAPSIZE% - MAPWIDTH% OR L1 < MAPWIDTH% THEN 10100   : REM TODO - Check with new map height
 10140     G(I%+1)=PC
 10150     IF I%>2 AND G(I%+1)<>G(I%-1) THEN L1=L+1
 10160     G(I%)=L1 : L=L1 : PROC_vpoke(G(I%), G(I%+1))
@@ -494,10 +508,10 @@
 10260     IF FN_vpeek(S(I%)) <> 32 OR FN_vpeek(S(I%)+1) <> 32 THEN 10240
 10270 NEXT I%
 10278 REM Draw woods, swamps and tower markers
-10279 COLOUR 10  : REM Bright green
+10279 COLOUR FN_getItemColour(WOODSCHAR%)  : REM Bright green
 10280 PROC_vpoke(S(0), WOODSCHAR%) : PROC_vpoke(S(0)+1, WOODSCHAR%) : PROC_vpoke(S(1), WOODSCHAR%) : PROC_vpoke(S(1)+1, WOODSCHAR%) : REM Woods (was 216)
 10290 PROC_vpoke(S(2), SWAMPCHAR%) : PROC_vpoke(S(2)+1, SWAMPCHAR%) : PROC_vpoke(S(3), SWAMPCHAR%) : PROC_vpoke(S(3)+1, SWAMPCHAR%) : REM Swamps (was 173)
-10295 COLOUR 15  : REM White
+10295 COLOUR FN_getItemColour(towerchar%)  : REM White
 10300 PROC_vpoke(S(4), towerchar%) : REM Black Tower (was 87)
 10310 M=MP:W=M
 10330 RETURN
@@ -506,18 +520,19 @@
 12000 F$="AFL" : PC=TUFTCHAR% : GOTO 12020
 12010 F$="FAEHL" : PC=TREECHAR% : PK=32
 12020 CLS : PROC_disableCursor : PROC_clearMap
-12025 COLOUR 10   : REM Brigth green
+12025 COLOUR FN_getItemColour(TREECHAR%)   : REM Brigth green
 12030 FOR I% = 1 TO 200 : PROC_vpoke(RND(MAPSIZE% - 1), PC) : NEXT I%  : REM Plot trees or tufts
 12077 REM Plot lake
-12078 COLOUR 4    : REM Dark blue
+12078 COLOUR FN_getItemColour(WATERCHAR%) : REM Dark blue
 12079 A% = WATERCHAR%
 12080 PROC_vpokeXY(R2+2, D2, A%) : PROC_vpokeXY(R2+3, D2, A%)
 12081 PROC_vpokeXY(R2+1, D2+1, A%) : PROC_vpokeXY(R2+2, D2+1, A%) : PROC_vpokeXY(R2+3, D2+1, A%) : PROC_vpokeXY(R2+4, D2+1, A%) : PROC_vpokeXY(R2+5, D2+1, A%)
 12082 PROC_vpokeXY(R2  , D2+2, A%) : PROC_vpokeXY(R2+1, D2+2, A%) : PROC_vpokeXY(R2+2, D2+2, 32) : PROC_vpokeXY(R2+3, D2+2, 32) : PROC_vpokeXY(R2+4, D2+2, A%) : PROC_vpokeXY(R2+5, D2+2, A%) : PROC_vpokeXY(R2+6, D2+2, A%)
-12083 PROC_vpokeXY(R2  , D2+3, A%) : PROC_vpokeXY(R2+1, D2+3, A%) : PROC_vpokeXY(R2+2, D2+3, LAIRCHAR%) : PROC_vpokeXY(R2+3, D2+3, 32) : PROC_vpokeXY(R2+4, D2+3, A%) : PROC_vpokeXY(R2+5, D2+3, A%) : PROC_vpokeXY(R2+6, D2+3, A%)
+12083 PROC_vpokeXY(R2  , D2+3, A%) : PROC_vpokeXY(R2+1, D2+3, A%) : PROC_vpokeXY(R2+3, D2+3, 32) : PROC_vpokeXY(R2+4, D2+3, A%) : PROC_vpokeXY(R2+5, D2+3, A%) : PROC_vpokeXY(R2+6, D2+3, A%)
 12084 PROC_vpokeXY(R2+1, D2+4, A%) : PROC_vpokeXY(R2+2, D2+4, A%) : PROC_vpokeXY(R2+3, D2+4, A%) : PROC_vpokeXY(R2+4, D2+4, A%) : PROC_vpokeXY(R2+5, D2+4, 32) : PROC_vpokeXY(R2+6, D2+4, A%) : PROC_vpokeXY(R2+7, D2+4, A%)
 12085 PROC_vpokeXY(R2+3, D2+5, A%) : PROC_vpokeXY(R2+4, D2+5, A%) 
 12086 PROC_vpokeXY(R2+4, D2+6, A%)
+12088 COLOUR FN_getItemColour(LAIRCHAR%) : PROC_vpokeXY(R2+2, D2+3, LAIRCHAR%)
 12148 REM Plot frame
 12149 COLOUR 10     : REM BRight green
 12150 FOR I% = 0 TO MAPWIDTH% - 1
